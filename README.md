@@ -1,6 +1,8 @@
 ## Brownian
 
-[![Build Status](https://travis-ci.org/UniversityofWarwick/Brownian.jl.png)](https://travis-ci.org/UniversityofWarwick/Brownian.jl)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pnavaro.github.io/Brownian.jl/dev)
+
+I upgrade the package https://github.com/UniversityofWarwick/Brownian.jl to julia 1.6 but i am not sure it is working well. Please use it with caution.
 
 The Julia `Brownian` package is aimed at providing a centralized repository of algorithms for simulating Brownian-based
 stochastic processes. More precisely, the package currently provides routines for random sampling from
@@ -8,14 +10,6 @@ stochastic processes. More precisely, the package currently provides routines fo
 * one-dimensional fractional Brownian motion (FBM) and one-dimensional fractional Gaussian noise (FGN) via the Cholesky
 decomposition method or the Davies-Harte method, which makes use of fast Fourier transforms,
 * one-dimensional Riemann-Liouville fractional Brownian motion (FBM) via an exact discrete method.
-
-The future roadmap would be to provide implementations for sampling from
-* one-dimensional Brownian motion via Brownian bridge and via multivariate normals,
-* one-dimensional fractional Brownian motion using the Hosking method,
-* multidimensional Brownian and fractional Brownian motion,
-* reflected Brownian motion (RBM).
-
-Willing developers are welcome to contribute to the package.
 
 ### Short tutorial
 

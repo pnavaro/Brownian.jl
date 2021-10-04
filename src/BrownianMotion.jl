@@ -11,7 +11,7 @@ struct BrownianMotion
 end
 
 BrownianMotion(t::Vector{Float64}) = BrownianMotion(t, Int64(length(t)))
-BrownianMotion(t::AbstractRange) = BrownianMotion(collect(t), Int64(length(t)))
+BrownianMotion(t::AbstractRange) = BrownianMotion(Float64.(collect(t)), Int64(length(t)))
 BrownianMotion(t::Float64, n::Int64) = BrownianMotion(0.0:t/n:t-t/n)
 BrownianMotion(t::Float64) = BrownianMotion([t], 1)
 
