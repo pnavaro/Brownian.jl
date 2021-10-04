@@ -1,4 +1,4 @@
-immutable BrownianMotion <: ContinuousUnivariateStochasticProcess
+struct BrownianMotion 
   t::Vector{Float64}
   n::Int64
 
@@ -11,12 +11,12 @@ immutable BrownianMotion <: ContinuousUnivariateStochasticProcess
 end
 
 BrownianMotion(t::Vector{Float64}) = BrownianMotion(t, Int64(length(t)))
-BrownianMotion(t::Range) = BrownianMotion(collect(t), Int64(length(t)))
+BrownianMotion(t::AbstractRange) = BrownianMotion(collect(t), Int64(length(t)))
 BrownianMotion(t::Float64, n::Int64) = BrownianMotion(0.0:t/n:t-t/n)
 BrownianMotion(t::Float64) = BrownianMotion([t], 1)
 
 BrownianMotion(t::Matrix{Float64}) = BrownianMotion[BrownianMotion(t[:, i]) for i = 1:size(t, 2)]
-BrownianMotion(t::Range, np::Int) = BrownianMotion[BrownianMotion(t) for i = 1:np]
+BrownianMotion(t::AbstractRange, np::Int) = BrownianMotion[BrownianMotion(t) for i = 1:np]
 BrownianMotion(t::Float64, n::Int64, np::Int) = BrownianMotion[BrownianMotion(t, n) for i = 1:np]
 
 function rand!(p::BrownianMotion, x::Vector{Float64})
@@ -37,6 +37,6 @@ function rand!(p::Vector{BrownianMotion}, x::Matrix{Float64})
   x
 end
 
-rand(p::BrownianMotion) = rand!(p, Array(Float64, p.n))
+rand(p::BrownianMotion) = rand!(p, zeros(Float64, p.n))
 
-rand(p::Vector{BrownianMotion}) = rand!(p, Array(Float64, p[1].n, length(p)))
+rand(p::Vector{BrownianMotion}) = rand!(p, zeros(Float64, p[1].n, length(p)))

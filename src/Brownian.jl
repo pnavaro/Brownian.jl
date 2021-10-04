@@ -1,39 +1,18 @@
-__precompile__()
-
 module Brownian
 
 using Distributions
 using PDMats
 using StatsBase
+using FFTW
 
-import Base: convert, rand!, rand
+import Base: convert
+import Random: rand!, rand
 import Distributions: VariateForm, Univariate, Multivariate, ValueSupport, Discrete, Continuous, Sampleable
 import StatsBase: IntegerVector, autocov!, autocov
 
-export
-  StochasticProcess,
-  UnivariateStochasticProcess,
-  MultivariateStochasticProcess,
-  DiscreteStochasticProcess,
-  ContinuousStochasticProcess,
-  #DiscreteUnivariateStochasticProcess,
-  ContinuousUnivariateStochasticProcess,
-  #DiscreteMultivariateStochasticProcess,
-  ContinuousMultivariateStochasticProcess,
-  BrownianMotion,
-  #MvBrownianMotion,
-  FBM,
-  FGN,
-  convert,
-  autocov!,
-  autocov,
-  chol_update,
-  rand!,
-  rand
+export BrownianMotion, FBM, FGN, rand!, rand, autocov, chol_update
 
-include("StochasticProcess.jl")
-include(joinpath("univariate", "BrownianMotion.jl"))
-include(joinpath("univariate", "FBM.jl"))
-#include(joinpath("multivariate", "MvBrownianMotion.jl"))
+include("BrownianMotion.jl")
+include("FBM.jl")
 
-end # module
+end 

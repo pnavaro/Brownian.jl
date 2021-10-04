@@ -1,5 +1,6 @@
-using Brownian
-using Base.Test
+using LinearAlgebra
+
+@testset "FBM" begin
 
 @test convert(FGN, FBM(0:0.5:10, 0.4)) == FGN(0.757858283255199,0.4)
 
@@ -31,5 +32,8 @@ q = FBM(0:.1:.1*101, 0.4)
 
 P = autocov(p)
 Q = autocov(q)
-c = chol(P)'
+c = (cholesky(P)).U'
 chol_update(convert(Array{Float64, 2}, c), Q)
+
+
+end

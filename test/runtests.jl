@@ -1,12 +1,5 @@
-println("Running tests:")
+using Brownian
+using Test
 
-tests = [
-  "BrownianMotion",
-  "FBM"
-]
-
-for t in tests
-    test_fn = "$t.jl"
-    println("  * $test_fn")
-    include(test_fn)
-end
+include("test_brownian_motion.jl")
+include("test_fbm.jl")

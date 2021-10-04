@@ -1,5 +1,9 @@
+using LinearAlgebra
+import SpecialFunctions: gamma
+
+
 # Fractional Brownian motion
-immutable FBM <: ContinuousUnivariateStochasticProcess
+struct FBM 
   t::Vector{Float64}
   n::Int64
   h::Float64 # Hurst index
@@ -14,16 +18,16 @@ immutable FBM <: ContinuousUnivariateStochasticProcess
 end
 
 FBM(t::Vector{Float64}, h::Float64) = FBM(t, Int64(length(t)), h)
-FBM(t::Range, h::Float64) = FBM(collect(t), Int64(length(t)), h)
+FBM(t::AbstractRange, h::Float64) = FBM(collect(t), Int64(length(t)), h)
 FBM(t::Float64, n::Int64, h::Float64) = FBM(0.0:t/n:t-t/n, h)
 FBM(t::Float64, h::Float64) = FBM([t], 1, h)
 
 FBM(t::Matrix{Float64}, h::Float64) = FBM[FBM(t[:, i], h) for i = 1:size(t, 2)]
-FBM(t::Range, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
+FBM(t::AbstractRange, np::Int, h::Float64) = FBM[FBM(t, h) for i = 1:np]
 FBM(t::Float64, n::Int64, np::Int, h::Float64) = FBM[FBM(t, n, h) for i = 1:np]
 
 # Fractional Gaussian noise
-immutable FGN <: ContinuousUnivariateStochasticProcess
+struct FGN 
   σ::Float64
   h::Float64 # Hurst index
 
@@ -63,7 +67,7 @@ function autocov!(c::Matrix{Float64}, p::FGN)
   c
 end
 
-autocov(p::FGN, maxlag::Int64) = autocov!(Array(Float64, maxlag, maxlag), p)
+autocov(p::FGN, maxlag::Int64) = autocov!(zeros(Float64, maxlag, maxlag), p)
 
 function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
   nlags = length(lags)
@@ -76,7 +80,7 @@ function autocov!(y::Vector{Float64}, p::FGN, lags::IntegerVector)
   y
 end
 
-autocov(p::FGN, lags::IntegerVector) = autocov!(Array(Float64, length(lags)), p, lags)
+autocov(p::FGN, lags::IntegerVector) = autocov!(zeros(Float64, length(lags)), p, lags)
 
 function autocov(p::FBM, i::Int64, j::Int64)
   twoh::Float64 = 2*p.h
@@ -103,15 +107,19 @@ end
 
 function autocov(p::FBM)
   n::Int64 = p.n-1
-  autocov!(Array(Float64, n, n), p)
+  autocov!(zeros(Float64, n, n), p)
 end
 
-### rand_chol generates FBM using the method based on Cholesky decomposition.
-### T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
-### The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
+"""
+rand_chol 
+
+generates FBM using the method based on Cholesky decomposition.
+T. Dieker, Simulation of Fractional Brownian Motion, master thesis, 2004.
+The complexity of the algorithm is O(n^3), where n is the number of FBM samples.
+"""
 function rand_chol(p::FBM, fbm::Bool=true)
 
-  w = (chol(autocov(p))')*randn(p.n-1)
+  w = (cholesky(autocov(p)).U') * randn(p.n-1)
 
   # If fbm is true return FBM, otherwise return FGN
   insert!(w, 1, 0.0)
@@ -122,35 +130,39 @@ function rand_chol(p::FBM, fbm::Bool=true)
   w
 end
 
-### rand_fft generates FBM using fast Fourier transform (FFT).
-### The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
-### The algorithm is known as the Davies-Harte method or the method of circular embedding.
-### R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1), 1987, pp. 95-102.
-### For a more recent publication, see P.F. Craigmile, Simulating a Class of Stationary Gaussian Processes Using the
-### Davies–Harte Algorithm, With Application to Long Memory Processes, Journal of Time Series Analysis, 24 (5), 2003,
-### pp. 505-511.
-### The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
+"""
+rand_fft 
+
+generates FBM using fast Fourier transform (FFT).
+The time interval of FBM is [0, 1] with a stepsize of 2^p, where p is a natural number.
+The algorithm is known as the Davies-Harte method or the method of circular embedding.
+R.B. Davies and D.S. Harte, Tests for Hurst Effect, Biometrika, 74 (1), 1987, pp. 95-102.
+For a more recent publication, see P.F. Craigmile, Simulating a Class of Stationary Gaussian Processes Using the
+Davies–Harte Algorithm, With Application to Long Memory Processes, Journal of Time Series Analysis, 24 (5), 2003,
+pp. 505-511.
+The complexity of the algorithm is O(n*log(n)), where n=2^p is the number of FBM samples.
+"""
 function rand_fft(p::FBM, fbm::Bool=true)
   # Determine number of points of simulated FBM
   pnmone = p.n-1
   n = 1 << Int(ceil(log2(pnmone)))
 
   # Compute autocovariance sequence of underlying FGN
-  c = Array(Float64, n+1)
+  c = zeros(Float64, n+1)
   autocov!(c, FGN((1/n)^p.h, p.h), 0:n)
 
   # Compute square root of eigenvalues of circular autocovariance sequence
-  l = real(fft(cat(1, c, c[end-1:-1:2])))
+  l = real(fft(vcat(1, c, c[end-1:-1:2])))
   all(i->(i>0), l) || error("Non-positive eigenvalues encountered.")
-  lsqrt = sqrt(l)
+  lsqrt = sqrt.(l)
 
   # Simulate standard random normal variables
-  twon::Int64 = 2*n
+  twon::Int64 = 2n
   z = randn(twon)
 
   # Generate fractional Gaussian noise (retain only the first p.n-1 values)
-  x = sqrt(0.5)*lsqrt[2:n].*complex(z[2*(2:n)-2], z[2*(2:n)-1])
-  w = real(bfft(cat(1, lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x)))))[1:pnmone]/sqrt(twon)
+  x = sqrt(0.5) .* lsqrt[2:n] .* complex.(z[2*(2:n) .- 2], z[2*(2:n) .- 1])
+  w = real(bfft(vcat(1, lsqrt[1]*z[1], x, lsqrt[n+1]*z[twon], conj(reverse(x)))))[1:pnmone]/sqrt(twon)
 
   # If fbm is true return FBM, otherwise return FGN
   if fbm
@@ -160,18 +172,30 @@ function rand_fft(p::FBM, fbm::Bool=true)
   w
 end
 
-### Implementation of "exact discrete" method for simulating Riemann-Liouville fBm
-### Based on Muniandy, S. & Lim, S. Modeling of locally self-similar processes using multifractional
-### Brownian motion of Riemann-Liouville type. Physical Review E 63, 046104. ISSN: 1063-651X (2001).
-### Specifically, Eqn. 17, 18 and 19.
-### From Muniandy (2001), Reimann-Liouville fBm is defined as,
-### B_H(t)=\frac{1}{\Gamma(H+0.5)}\int^{t}_{0}(t-s)^(H-0.5)dB(s), t\geq0.
-### Here we focus on the discrete time t_j=j\Delta t approximation,
-### B_H(t_j)=\frac{1}{\Gamma(H+0.5)}\sum^{j}_{i=1}\int^{i\Delta t}_{(i-1)\Delta t}(t_j-\tau)^(H-0.5)dB(\tau)
-### The exact solution to the interior integral results in a weighting function, implemented here with the :Exact key.
-### An "improved" weighting function was proposed by
-### Rambaldi, S. & Pinazza, O. An accurate fractional Brownian motion generator. Physica A 208, 21–30 (1994).
-### We have implemented this here with the :Improved key.
+"""
+    rand_rl
+
+Implementation of "exact discrete" method for simulating Riemann-Liouville fBm
+Based on Muniandy, S. & Lim, S. Modeling of locally self-similar processes using multifractional
+Brownian motion of Riemann-Liouville type. Physical Review E 63, 046104. ISSN: 1063-651X (2001).
+Specifically, Eqn. 17, 18 and 19.
+From Muniandy (2001), Reimann-Liouville fBm is defined as,
+
+```math
+B_H(t)=\\frac{1}{\\Gamma(H+0.5)}\\int^{t}_{0}(t-s)^(H-0.5)dB(s), t\\geq0.
+```
+
+Here we focus on the discrete time ``t_j=j\\Delta t`` approximation,
+
+```math
+B_H(t_j)=\\frac{1}{\\Gamma(H+0.5)}\\sum^{j}_{i=1}\\int^{i\\Delta t}_{(i-1)\\Delta t}(t_j-\\tau)^(H-0.5)dB(\\tau)
+```
+
+The exact solution to the interior integral results in a weighting function, implemented here with the :Exact key.
+An "improved" weighting function was proposed by
+Rambaldi, S. & Pinazza, O. An accurate fractional Brownian motion generator. Physica A 208, 21–30 (1994).
+We have implemented this here with the :Improved key.
+"""
 function rand_rl(p::FBM, fbm::Bool=true; wtype::Symbol=:exact)
   # We are going to require that the time points are evenly spaced to keep things simple
   dt = unique(diff(p.t))
@@ -190,7 +214,7 @@ function rand_rl(p::FBM, fbm::Bool=true; wtype::Symbol=:exact)
   end
 
   # Multiply a vector of white noise by the weight matrix and scale appropriately.
-	X = squeeze(sqrt(2)*(randn(p.n-1)'*w_mat),1).*sqrt(dt)
+	X = dropdims(sqrt(2)*(randn(p.n-1)'*w_mat),dims=1).*sqrt(dt)
 
 	insert!(X, 1, 0.0)  # Snap to zero. Not clear if this causes a discontinuity in the correlation structure.
   #It is worth considering alternative for the above line: generate path X of length p.n, then let X = X-X[1].
@@ -229,7 +253,7 @@ end
 function rand(p::Vector{FBM}; fbm::Bool=true, method::Symbol=:fft, args...)
   n::Int64 = fbm ? p[1].n : p[1].n-1
   np = length(p)
-  x = Array(Float64, n, np)
+  x = zeros(Float64, n, np)
 
   for i = 1:np
     x[:, i] = rand(p[i]; fbm=fbm, method=method, args...)
@@ -248,10 +272,10 @@ function chol_update(r0::Array{Float64,2},A::Array{Float64,2})
     r1[1:end-1,1:end-1] = r0
 
   @inbounds  for i=1:m-1
-        r1[m,i] =  (1./r1[i,i])*(A[m,i]-sum(r1[m,1:i].*r1[i,1:i]))[1]
+        r1[m,i] =  (1/r1[i,i])*(A[m,i]-sum(r1[m,1:i].*r1[i,1:i]))[1]
     end
 
-    r1[m,m] = sqrt(A[m,m]-sum(r1[m,1:m-1].*r1[m,1:m-1]))[1]
+    r1[m,m] = sqrt(A[m,m]-sum(r1[m,1:m-1] .* r1[m,1:m-1]))[1]
 
     return r1
 end
