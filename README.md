@@ -24,8 +24,8 @@ using Plots
 t = LinRange(0,1,100)
 p = BrownianMotion(t)
 
-plot(rand(p))
-plot!(rand(p))
+plot(t, rand(p))
+plot!(t, rand(p))
 ```
 
 ![example1](docs/src/assets/example1.png)
