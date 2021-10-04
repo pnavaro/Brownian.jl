@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pnavaro.github.io/Brownian.jl/dev)
 
-I upgrade the package https://github.com/UniversityofWarwick/Brownian.jl to julia 1.6 but i am not sure it is working well. Please use it with caution.
+*I upgrade the package https://github.com/UniversityofWarwick/Brownian.jl to julia 1.6 but i am not sure it is working well. Please use it with caution. Pierre Navaro.*
 
 The Julia `Brownian` package is aimed at providing a centralized repository of algorithms for simulating Brownian-based
 stochastic processes. More precisely, the package currently provides routines for random sampling from
@@ -15,15 +15,20 @@ decomposition method or the Davies-Harte method, which makes use of fast Fourier
 
 ### Example 1: simulation of Brownian motion
 
-To simulate Brownian motion at the time points (0, 0.1, 0.5, 0.75, 1), use the following snippet:
+To simulate Brownian motion at the 100 time points from 0 to 1, use the following snippet:
 
 ```
 using Brownian
+using Plots
 
-p = BrownianMotion([0, 0.1, 0.5, 0.75, 1])
+t = LinRange(0,1,100)
+p = BrownianMotion(t)
 
-rand(p)
+plot(rand(p))
+plot!(rand(p))
 ```
+
+![example1](docs/src/assets/example1.png)
 
 ### Example 2: simulation of FBM and FGN
 
