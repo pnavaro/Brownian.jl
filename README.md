@@ -2,7 +2,7 @@
 
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://pnavaro.github.io/Brownian.jl/dev)
 
-*I upgrade the package https://github.com/UniversityofWarwick/Brownian.jl to julia 1.6 but i am not sure it is working well. Please use it with caution. Pierre Navaro.*
+*I upgrade the package https://github.com/UniversityofWarwick/Brownian.jl to julia 1.6 but i am not sure it is working well. Please use it with caution.*
 
 The Julia `Brownian` package is aimed at providing a centralized repository of algorithms for simulating Brownian-based
 stochastic processes. More precisely, the package currently provides routines for random sampling from
