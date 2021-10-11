@@ -20,3 +20,6 @@ Distributions = "0.25"
 FFTW = "1"
 SpecialFunctions = "1"
 Images = "0.24"
+Distributions = "0.25"
+StatsBase = "0.33"
+
